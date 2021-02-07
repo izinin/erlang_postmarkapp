@@ -4,6 +4,12 @@ erlang_postmarkapp
 An Erlang library for consuming the Postmark mail service API, inspired by the official Postmark PHP package 
 [https://github.com/wildbit/postmark-php](https://github.com/wildbit/postmark-php).
 
+## IMPORTANT NOTICE ##
+
+* JSON dependecy library for this application was replaced and the code implementation has been updated accordingly to support new library API. `jsx` has been changed to `jiffy` because `jsx` does not exist in ejabberd standard installation. In contrast to jsx:encode and decode that accepts proplists , jiffy accepts tuple, i.e. {proplists}
+* [Jiffy reference](https://github.com/davisp/jiffy)
+---
+
 * [Build](#build)
 * [Quickstart](#quickstart)
 * [Supported Operations](#supported-operations)

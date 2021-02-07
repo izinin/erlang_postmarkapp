@@ -38,7 +38,8 @@ get_default_headers() ->
 request(Method, Endpoint, Body) ->
     case Body of
         {json, Payload} ->
-            request(Method, Endpoint, jiffy:encode(Payload), get_default_headers());
+            %% NOTE in contrast to jsx:encode that accepts proplists , jiffy accepts tuple, i.e. {proplists}
+            request(Method, Endpoint, jiffy:encode({Payload}), get_default_headers());
         {string, Json} ->
             request(Method, Endpoint, Json, get_default_headers())
     end.
@@ -68,11 +69,12 @@ process_response(HttpResponse) ->
         {ok, {{_HttpVersion, 200, _Phrase}, ResponseHeaders, Body}} ->
             %% successfully got a response from the server
             io:format("Response Body: ~p~n", [Body]),
-            [{headers, ResponseHeaders}, {body, jiffy:decode(list_to_binary(Body))}];
+            {Response} = jiffy:decode(list_to_binary(Body)),
+            [{headers, ResponseHeaders}, {body, Response}];
         {ok, {{_HttpVersion, _HttpStatus, _Phrase}, ResponseHeaders, Body}} ->
             %% the request did not succeed -- some other http status other than 200
             io:format("Response Body: ~p~n", [Body]),
-            BodyAsJson = jiffy:decode(list_to_binary(Body)),
+            {BodyAsJson} = jiffy:decode(list_to_binary(Body)),
             case erlang_postmarkapp:get_response_data("ErrorCode", BodyAsJson) of
                 undefined -> [{headers, ResponseHeaders}, {body, BodyAsJson}];
                 ErrorCode ->
@@ -82,10 +84,12 @@ process_response(HttpResponse) ->
             end;
         {ok, {200, Body}} ->
             io:format("Response Body: ~p~n", [Body]),
-            [{headers, []}, {body, jiffy:decode(list_to_binary(Body))}];
+            {Response} = jiffy:decode(list_to_binary(Body)),
+            [{headers, []}, {body, Response}];
         {ok, {StatusCode, Body}} ->
             io:format("Response Body: ~p~n", [Body]),
-            {error, StatusCode, jiffy:decode(list_to_binary(Body))};
+            {Response} = jiffy:decode(list_to_binary(Body)),
+            {error, StatusCode, Response};
         {error, {connect_failed, Reason}} ->
             Message = lists:flatten(["Connection failed error (", Reason, ")"]),
             {error, fail, Message};
@@ -94,7 +98,7 @@ process_response(HttpResponse) ->
             {error, fail, Message};
         {error, Reason} ->
             io:format("Response Body: ~p~n", [Reason]),
-            BodyAsJson = jiffy:decode(list_to_binary(Reason)),
+            {BodyAsJson} = jiffy:decode(list_to_binary(Reason)),
             ErrorMessage = erlang_postmarkapp:get_response_data("Message", BodyAsJson),
             Message = lists:flatten([
                 "Postmark API Error (",
