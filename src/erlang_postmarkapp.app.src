@@ -2,7 +2,7 @@
  [{description, "a library for consuming the Postmark email service"},
   {vsn, "1.0.4"},
   {registered, []},
-  {applications, [kernel, stdlib, jsx]},
+  {applications, [kernel, stdlib, jiffy]},
   {env,[]},
   {modules, [
    erlang_postmarkapp,
@@ -14,7 +14,7 @@
   {licenses, ["MIT"]},
   {links, [
    {"Rebar3", "http://www.rebar3.org/"},
-   {"Jsx", "https://github.com/talentdeficit/jsx"}
+   {"jiffy", "https://github.com/davisp/jiffy"}
   ]},
   {files, [
    "src",
