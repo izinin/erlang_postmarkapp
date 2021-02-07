@@ -9,6 +9,9 @@
 %%%-------------------------------------------------------------------
 -module(erlang_postmarkapp_request).
 -author("eokeke").
+
+-compile([{parse_transform, lager_transform}]).
+
 -include("erlang_postmarkapp.hrl").
 
 %% API
@@ -49,14 +52,14 @@ request(Method, Endpoint, Body) ->
 request(Method, Endpoint, Payload, Headers) ->
     Url = string:join([?POSTMARK_REST_URL, Endpoint], "/"),
     ContentType = proplists:get_value("content-type", Headers, ?POSTMARK_CONTENT_TYPE),
-    io:format("Request Url: ~p~n", [Url]),
-    io:format("Request Headers: ~p~n", [Headers]),
-    io:format("Request Body: ~p~n", [Payload]),
+    lager:info("Request Url: ~p~n", [Url]),
+    lager:info("Request Headers: ~p~n", [Headers]),
+    lager:info("Request Body: ~p~n", [Payload]),
     case Method of
         get ->
             process_response(httpc:request(get, {Url, Headers}, [], []));
         _ ->
-            io:format("Content-Type: ~p~n", [ContentType]),
+            lager:info("Content-Type: ~p~n", [ContentType]),
             process_response(httpc:request(Method, {Url, Headers, ContentType, Payload}, ?POSTMARK_REQUEST_OPTS, []))
     end.
 
@@ -68,26 +71,26 @@ process_response(HttpResponse) ->
             [{headers, ResponseHeaders}, {body, []}];
         {ok, {{_HttpVersion, 200, _Phrase}, ResponseHeaders, Body}} ->
             %% successfully got a response from the server
-            io:format("Response Body: ~p~n", [Body]),
+            lager:info("Response Body: ~p~n", [Body]),
             {Response} = jiffy:decode(list_to_binary(Body)),
             [{headers, ResponseHeaders}, {body, Response}];
         {ok, {{_HttpVersion, _HttpStatus, _Phrase}, ResponseHeaders, Body}} ->
             %% the request did not succeed -- some other http status other than 200
-            io:format("Response Body: ~p~n", [Body]),
+            lager:info("Response Body: ~p~n", [Body]),
             {BodyAsJson} = jiffy:decode(list_to_binary(Body)),
             case erlang_postmarkapp:get_response_data("ErrorCode", BodyAsJson) of
                 undefined -> [{headers, ResponseHeaders}, {body, BodyAsJson}];
                 ErrorCode ->
-                    io:format("Error Code: ~p~n", [ErrorCode]),
+                    lager:info("Error Code: ~p~n", [ErrorCode]),
                     ErrorMessage = erlang_postmarkapp:get_response_data("Message", BodyAsJson),
                     {error, ErrorCode, ErrorMessage}
             end;
         {ok, {200, Body}} ->
-            io:format("Response Body: ~p~n", [Body]),
+            lager:info("Response Body: ~p~n", [Body]),
             {Response} = jiffy:decode(list_to_binary(Body)),
             [{headers, []}, {body, Response}];
         {ok, {StatusCode, Body}} ->
-            io:format("Response Body: ~p~n", [Body]),
+            lager:info("Response Body: ~p~n", [Body]),
             {Response} = jiffy:decode(list_to_binary(Body)),
             {error, StatusCode, Response};
         {error, {connect_failed, Reason}} ->
@@ -97,7 +100,7 @@ process_response(HttpResponse) ->
             Message = lists:flatten(["Request sending failed error (", Reason, ")"]),
             {error, fail, Message};
         {error, Reason} ->
-            io:format("Response Body: ~p~n", [Reason]),
+            lager:info("Response Body: ~p~n", [Reason]),
             {BodyAsJson} = jiffy:decode(list_to_binary(Reason)),
             ErrorMessage = erlang_postmarkapp:get_response_data("Message", BodyAsJson),
             Message = lists:flatten([
@@ -108,8 +111,8 @@ process_response(HttpResponse) ->
             ]),
             {error, fail, Message}
     catch
-        error:badarg -> io:format("Error:badarg");
-        error:Error -> io:format("Error: ~p~n", [Error])
+        error:badarg -> lager:info("Error:badarg");
+        error:Error -> lager:info("Error: ~p~n", [Error])
     end.
 
 %% @doc converts a list of query parameters to a query string

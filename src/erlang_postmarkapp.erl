@@ -9,6 +9,9 @@
 %%%-------------------------------------------------------------------
 -module(erlang_postmarkapp).
 -author("eokeke").
+
+-compile([{parse_transform, lager_transform}]).
+
 -include("erlang_postmarkapp.hrl").
 
 %% API exports
@@ -125,7 +128,7 @@ send_email_batch(PostmarkEmailList) when is_list(PostmarkEmailList), length(Post
             case erlang_postmarkapp_request:request(post, ?POSTMARK_ENDPOINT_EMAIL_BATCH, {json, Payload}) of
                 [{headers, _}, {body, Json}] ->
                     SendResponses = process_batch_send_response(Json),
-                    io:format("Responses: ~p~n", [SendResponses]),
+                    lager:info("Responses: ~p~n", [SendResponses]),
                     SuccessfulSends = lists:filter(fun (SendResponse) ->
                         case SendResponse#postmark_send_response.message_id of
                             undefined -> false;
@@ -274,7 +277,7 @@ start() ->
         undefined -> ets:new(?POSTMARK_ETS_TABLE, [set, named_table]);
         _Table -> ok
     catch
-        error:badarg -> io:format("Table probaly already exists~n")
+        error:badarg -> lager:info("Table probaly already exists~n")
     end,
     inets:start(),
     ssl:start(),

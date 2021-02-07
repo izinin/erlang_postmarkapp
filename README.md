@@ -440,8 +440,8 @@ send_text_mail() ->
     erlang_postmarkapp:setup(ServerToken),
     Body = {text, "Hello World!"},
     case erlang_postmarkapp:send_email("signature@domain.com", "recipient@example.com", "A good example", Body) of
-        {ok, MessageId} -> io:format("Successfully sent email with MessageID ~p~n", [MessageId]);
-        {error, Reason} -> io:format("Message sending failed because ~p~n", [Reason])
+        {ok, MessageId} -> lager:info("Successfully sent email with MessageID ~p~n", [MessageId]);
+        {error, Reason} -> lager:info("Message sending failed because ~p~n", [Reason])
     end.
 ```
 

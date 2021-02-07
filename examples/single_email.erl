@@ -8,6 +8,9 @@
 %%%-------------------------------------------------------------------
 -module(single_email).
 -author("eokeke").
+
+-compile([{parse_transform, lager_transform}]).
+
 -include("../src/erlang_postmarkapp.hrl").
 
 %% API
@@ -18,8 +21,8 @@ send_text_mail() ->
     erlang_postmarkapp:setup(ServerToken),
     Body = {text, "Hello World!"},
     case erlang_postmarkapp:send_email("signature@domain.com", "recipient@example.com", "A good example", Body) of
-        {ok, MessageId} -> io:format("Successfully sent email with MessageID ~p~n", [MessageId]);
-        {error, Reason} -> io:format("Message sending failed because ~p~n", [Reason])
+        {ok, MessageId} -> lager:info("Successfully sent email with MessageID ~p~n", [MessageId]);
+        {error, Reason} -> lager:info("Message sending failed because ~p~n", [Reason])
     end.
 
 send_html_email() ->
@@ -27,8 +30,8 @@ send_html_email() ->
     erlang_postmarkapp:setup(ServerToken),
     Body = {html, "Hello World!"},
     case erlang_postmarkapp:send_email("signature@domain.com", "recipient@example.com", "A good example", Body) of
-        {ok, MessageId} -> io:format("Successfully sent email with MessageID ~p~n", [MessageId]);
-        {error, Reason} -> io:format("Message sending failed because ~p~n", [Reason])
+        {ok, MessageId} -> lager:info("Successfully sent email with MessageID ~p~n", [MessageId]);
+        {error, Reason} -> lager:info("Message sending failed because ~p~n", [Reason])
     end.
 
 send_using_email_record() ->
@@ -37,8 +40,8 @@ send_using_email_record() ->
     Email = #postmark_email{from = "signature@domain.com", to = "recipient@example.com", subject = "A good example",
         html = "<strong>Hi there!</strong><p>Hello World!</p>"},
     case erlang_postmarkapp:send_email(Email) of
-        {ok, MessageId} -> io:format("Successfully sent email with MessageID ~p~n", [MessageId]);
-        {error, Reason} -> io:format("Message sending failed because ~p~n", [Reason])
+        {ok, MessageId} -> lager:info("Successfully sent email with MessageID ~p~n", [MessageId]);
+        {error, Reason} -> lager:info("Message sending failed because ~p~n", [Reason])
     end.
 
 send_with_template() ->
@@ -62,6 +65,6 @@ send_with_template() ->
         undefined,
         none
     ) of
-        {ok, MessageId} -> io:format("Successfully sent email with MessageID ~p~n", [MessageId]);
-        {error, Reason} -> io:format("Message sending failed because ~p~n", [Reason])
+        {ok, MessageId} -> lager:info("Successfully sent email with MessageID ~p~n", [MessageId]);
+        {error, Reason} -> lager:info("Message sending failed because ~p~n", [Reason])
     end.
