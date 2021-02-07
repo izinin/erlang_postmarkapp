@@ -229,6 +229,7 @@ track_links_to_string(TrackLinkStatus) ->
     end.
 
 -spec attachments_2_json_proplist([#postmark_attachment{}]) -> list().
+attachments_2_json_proplist(undefined) -> undefined;
 attachments_2_json_proplist(Attachments) ->
     AttachmentsList0 = [ [
         {<<"Name">>, Name},
