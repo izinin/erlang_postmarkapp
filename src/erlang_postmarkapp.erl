@@ -11,7 +11,6 @@
 -author("eokeke").
 
 -compile([{parse_transform, lager_transform}]).
--compile(export_all).
 
 -include("erlang_postmarkapp.hrl").
 
@@ -23,7 +22,7 @@
     send_email/4,
     send_email/11,
     send_email_with_template/1,
-    send_email_with_template/10,
+    send_email_with_template/11,
     send_email_batch/1,
     get_attribute_value/2,
     get_response_data/2,
@@ -34,22 +33,22 @@
     get_account_token/0
 ]).
 
--type emailBody() :: {text, string()} | {html, string()}.
+-type emailBody() :: {text, binary()} | {html, binary()}.
 -type postmarkEmail() :: #postmark_email{}.
 -type postmarkEmails() :: [postmarkEmail()].
--type sendEmailResponse() :: {ok, string()} | {error, string()}.
+-type sendEmailResponse() :: {ok, binary()} | {error, binary()}.
 
 %%====================================================================
 %% API functions
 %%====================================================================
 
 %% @doc sets up the environment for making postmark requests
--spec setup(ServerToken::string()) -> ok.
+-spec setup(ServerToken::binary()) -> ok.
 setup(ServerToken) ->
     setup(ServerToken, undefined).
 
 %% @doc sets up the environment for making postmark requests
--spec setup(ServerToken::string(), AccountToken::string()) -> ok.
+-spec setup(ServerToken::binary(), AccountToken::binary()) -> ok.
 setup(ServerToken, AccountToken) ->
     start(),
     ets:insert(?POSTMARK_ETS_TABLE, {?POSTMARK_ETS_SERVER_TOKEN_KEY, ServerToken}),
@@ -57,7 +56,7 @@ setup(ServerToken, AccountToken) ->
     ok.
 
 %% @doc returns the server token saved to the postmark ets table using the server_token key
--spec get_server_token() -> string().
+-spec get_server_token() -> binary().
 get_server_token() ->
     case ets:lookup(?POSTMARK_ETS_TABLE, ?POSTMARK_ETS_SERVER_TOKEN_KEY) of
         [{?POSTMARK_ETS_SERVER_TOKEN_KEY, ServerToken}] -> ServerToken;
@@ -65,7 +64,7 @@ get_server_token() ->
     end.
 
 %% @doc returns the account token saved to the postmark ets table using the account_token key
--spec get_account_token() -> string().
+-spec get_account_token() -> binary().
 get_account_token() ->
     case ets:lookup(?POSTMARK_ETS_TABLE, ?POSTMARK_ETS_ACCOUNT_TOKEN_KEY) of
         [{?POSTMARK_ETS_SERVER_TOKEN_KEY, undefined}] -> "";
@@ -74,7 +73,7 @@ get_account_token() ->
     end.
 
 %% @doc sends a single email
--spec send_email(From::string(), To::string(), Subject::string(), Body::emailBody()) -> sendEmailResponse().
+-spec send_email(From::binary(), To::binary(), Subject::binary(), Body::emailBody()) -> sendEmailResponse().
 send_email(From, To, Subject, Body) ->
     case Body of
         {html, HtmlBody} ->
@@ -84,8 +83,8 @@ send_email(From, To, Subject, Body) ->
     end.
 
 %% @doc sends a single email
--spec send_email(From::string(), To::string(), Subject::string(), HtmlBody:: optionalValue(), TextBody:: optionalValue(),
-    Tag::string(), TrackOpens::boolean(), ReplyTo:: optionalValue(), Cc:: optionalValue(), Bcc:: optionalValue(),
+-spec send_email(From::binary(), To::binary(), Subject::binary(), HtmlBody:: optionalValue(), TextBody:: optionalValue(),
+    Tag::binary(), TrackOpens::boolean(), ReplyTo:: optionalValue(), Cc:: optionalValue(), Bcc:: optionalValue(),
     TrackLinks::trackLinkStatus()) -> sendEmailResponse().
 send_email(From, To, Subject, HtmlBody, TextBody, Tag, TrackOpens, ReplyTo, Cc, Bcc, TrackLinks) ->
     Email = #postmark_email{from = From, to = To, subject = Subject, html = HtmlBody, text = TextBody, tag = Tag,
@@ -171,12 +170,12 @@ send_email_batch(_) ->
     {error, "You need to provide a list of postmark_email records to be sent in a batch"}.
 
 %% @doc Send an email using a template.
--spec send_email_with_template(From::string(), To::string(), TemplateId::string(), TemplateModel::list(),
+-spec send_email_with_template(From::binary(), To::binary(), TemplateId::binary(), TemplateModel::list(), Metadata::list(),
     Tag:: optionalValue(), TrackOpens::boolean(), ReplyTo:: optionalValue(), Cc:: optionalValue(),
     Bcc:: optionalValue(), TrackLinks::trackLinkStatus()) -> sendEmailResponse().
-send_email_with_template(From, To, TemplateId, TemplateModel, Tag, TrackOpens, ReplyTo, Cc, Bcc, TrackLinks) ->
+send_email_with_template(From, To, TemplateId, TemplateModel, Metadata, Tag, TrackOpens, ReplyTo, Cc, Bcc, TrackLinks) ->
     Email = #postmark_email{from = From, to = To, tag = Tag, track_opens = TrackOpens, reply_to = ReplyTo, cc = Cc,
-        bcc = Bcc, track_links = TrackLinks, template_id = TemplateId, template_model = TemplateModel},
+        bcc = Bcc, track_links = TrackLinks, template_id = TemplateId, template_model = TemplateModel, metadata = Metadata},
     send_email_with_template(Email).
 
 %% @doc Send an email using a template.
@@ -214,7 +213,7 @@ get_response_data(Key, Data) ->
     end.
 
 %% @doc converts the track links option to the string value
--spec track_links_to_binary(TrackLinkStatus::trackLinkStatus()) -> string().
+-spec track_links_to_binary(TrackLinkStatus::trackLinkStatus()) -> binary().
 track_links_to_binary(TrackLinkStatus) ->
     case TrackLinkStatus of
         none -> <<"None">>;
@@ -256,7 +255,7 @@ is_value_not_undefined({_, Value}) ->
     end.
 
 %% @doc returns the value for an attribute
--spec get_attribute_value(Attribute::string(), Proplist::list()) -> list() | binary() | undefined.
+-spec get_attribute_value(Attribute::binary(), Proplist::list()) -> list() | binary() | undefined.
 get_attribute_value(Attribute, Proplist) ->
     proplists:get_value(list_to_binary(Attribute), Proplist).
 
@@ -318,7 +317,7 @@ collect_emails([H|T], Accumulator) ->
 postmark_email_to_json(PostmarkEmail) when is_record(PostmarkEmail, postmark_email) ->
     #postmark_email{from = From, to = To, subject = Subject, html = Html, text = Text, tag = Tag,
         track_opens = TrackOpens, reply_to = ReplyTo, cc = Cc, bcc = Bcc, track_links = TrackLinks,
-        template_id = TemplateId, template_model = TemplateModel, attachments = Attachments, inline_css = InlineCss} = PostmarkEmail,
+        template_id = TemplateId, template_model = TemplateModel, metadata = Metadata, attachments = Attachments, inline_css = InlineCss} = PostmarkEmail,
     Raw = [
         {<<"From">>, From},
         {<<"To">>, To},
@@ -331,6 +330,7 @@ postmark_email_to_json(PostmarkEmail) when is_record(PostmarkEmail, postmark_ema
         {<<"ReplyTo">>, ReplyTo},
         {<<"TemplateId">>, TemplateId},
         {<<"TemplateModel">>, TemplateModel},
+        {<<"Metadata">>, Metadata},
         {<<"InlineCss">>, InlineCss},
         {<<"TrackOpens">>, TrackOpens},
         {<<"Attachments">>, attachments_2_json_proplist(Attachments)},

@@ -45,6 +45,7 @@
     track_links         :: trackLinkStatus(),
     template_id         :: optionalValue(),
     template_model      :: optionalListValue(),
+    metadata            :: optionalListValue(),
     attachments         :: listAttachments(),
     inline_css=true     :: boolean()
 }).

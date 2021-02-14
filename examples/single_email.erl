@@ -58,6 +58,7 @@ send_with_template() ->
         "recipient@example.com",
         "template_id",
         Model,
+        undefined,
         "password-recovery",
         true,
         undefined,
