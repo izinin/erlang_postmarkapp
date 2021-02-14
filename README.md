@@ -68,7 +68,7 @@ Add it to your `rebar.config` like so:
 
 ### <a name="type-deliveryStatsResponse">deliveryStatsResponse()</a>
 
-<tt>deliveryStatsResponse() = [deliveryStat()] | {error, string()}</tt>
+<tt>deliveryStatsResponse() = [deliveryStat()] | {error, binary()}</tt>
 
 ### <a name="type-bounce">bounce()</a>
 
@@ -88,11 +88,11 @@ Add it to your `rebar.config` like so:
 
 ### <a name="type-emailBody">emailBody()</a>
 
-<tt>emailBody() = {text, string()} | {html, string()}</tt>
+<tt>emailBody() = {text, binary()} | {html, binary()}</tt>
 
 ### <a name="type-optionalValue">optionalValue()</a>
 
-<tt>optionalValue() = string() | undefined</tt>
+<tt>optionalValue() = binary() | undefined</tt>
 
 ### <a name="type-optionalListValue">optionalListValue()</a>
 
@@ -108,7 +108,7 @@ Add it to your `rebar.config` like so:
 
 ### <a name="type-sendEmailResponse">sendEmailResponse()</a>
 
-<tt>sendEmailResponse() = {ok, string()} | {error, string()}</tt>
+<tt>sendEmailResponse() = {ok, binary()} | {error, binary()}</tt>
 
 ### <a name="type-serverColor">serverColor()</a>
 
@@ -116,7 +116,7 @@ Add it to your `rebar.config` like so:
 
 ### <a name="type-tag">tag()</a>
 
-<tt>tag() = string()</tt>
+<tt>tag() = binary()</tt>
 
 ### <a name="type-tags">tags()</a>
 
@@ -133,9 +133,9 @@ Add it to your `rebar.config` like so:
 
 <tt>
 -record(postmark_email, {
-    from                :: string(),
-    to                  :: string(),
-    subject             :: string(),
+    from                :: binary(),
+    to                  :: binary(),
+    subject             :: binary(),
     html                :: optionalValue(),
     text                :: optionalValue(),
     tag                 :: optionalValue(),
@@ -154,9 +154,9 @@ Add it to your `rebar.config` like so:
 
 <tt>
 -record(postmark_send_response, {
-    message_id  :: string(),
+    message_id  :: binary(),
     error_code  :: integer(),
-    message     :: string()
+    message     :: binary()
 })
 </tt>
 
@@ -166,13 +166,13 @@ Add it to your `rebar.config` like so:
 -record(postmark_bounce_request, {
     count=500       :: integer(),
     offset=0        :: integer(),
-    bounce_type     :: string(),
-    email           :: string(),
+    bounce_type     :: binary(),
+    email           :: binary(),
     inactive        :: boolean(),
-    tag             :: string(),
-    message_id      :: string(),
-    from_date       :: string(),
-    to_date         :: string()
+    tag             :: binary(),
+    message_id      :: binary(),
+    from_date       :: binary(),
+    to_date         :: binary()
 })
 </tt>
 
@@ -181,7 +181,7 @@ Add it to your `rebar.config` like so:
 <tt>
 -record(postmark_bounce_stats, {
     type    :: optionalValue(),
-    name    :: string(),
+    name    :: binary(),
     count   :: integer()
 })
 </tt>
@@ -191,21 +191,21 @@ Add it to your `rebar.config` like so:
 <tt>
 -record(postmark_bounce, {
     id              :: integer(),
-    type            :: string(),
+    type            :: binary(),
     type_code       :: integer(),
-    name            :: string(),
+    name            :: binary(),
     tag             :: optionalValue(),
     message_id      :: optionalValue(),
     server_id       :: optionalValue(),
     description     :: optionalValue(),
     details         :: optionalValue(),
-    email           :: string(),
-    from            :: string(),
-    bounced_at      :: string(),
+    email           :: binary(),
+    from            :: binary(),
+    bounced_at      :: binary(),
     dump_available  :: boolean(),
     inactive        :: boolean(),
     can_activate    :: boolean(),
-    subject         :: string()
+    subject         :: binary()
 })
 </tt>
 
@@ -214,23 +214,23 @@ Add it to your `rebar.config` like so:
 <tt>
 -record(postmark_server, {
     id                              :: integer(),
-    name                            :: string(),
+    name                            :: binary(),
     api_tokens=[]                   :: list(),
-    server_link                     :: string(),
+    server_link                     :: binary(),
     color                           :: serverColor(),
     smtp_api_activated              :: boolean(),
     raw_email_enabled               :: boolean(),
-    delivery_hook_url               :: string(),
-    inbound_address                 :: string(),
-    inbound_hook_url                :: string(),
-    bounce_hook_url                 :: string(),
+    delivery_hook_url               :: binary(),
+    inbound_address                 :: binary(),
+    inbound_hook_url                :: binary(),
+    bounce_hook_url                 :: binary(),
     include_bounce_content_in_hook  :: boolean(),
     open_hook_url                   :: boolean(),
     post_first_open_only            :: boolean(),
     track_opens                     :: boolean(),
     track_links                     :: trackLinkStatus(),
-    inbound_domain                  :: string(),
-    inbound_hash                    :: string(),
+    inbound_domain                  :: binary(),
+    inbound_hash                    :: binary(),
     inbound_spam_threshold          :: integer()
 })
 </tt>
@@ -274,7 +274,7 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>activate_bounce(BounceId::integer()) -> {ok, bounce()} | {error, string()}</tt>
+<tt>activate_bounce(BounceId::integer()) -> {ok, bounce()} | {error, binary()}</tt>
 
 </div>
 
@@ -282,7 +282,7 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>get_bounces(BounceRequestRecord::#postmark_bounce_request{}) -> bouncesResponse() | {error, string()}</tt>
+<tt>get_bounces(BounceRequestRecord::#postmark_bounce_request{}) -> bouncesResponse() | {error, binary()}</tt>
 
 </div>
 
@@ -290,7 +290,7 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>get_bounce(BounceId::integer()) -> {ok, bounce()} | {error, string()}</tt>
+<tt>get_bounce(BounceId::integer()) -> {ok, bounce()} | {error, binary()}</tt>
 
 </div>
 
@@ -298,7 +298,7 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>get_bounce_dump(BounceId::integer()) -> {ok, string()} | {error, string()}</tt>
+<tt>get_bounce_dump(BounceId::integer()) -> {ok, binary()} | {error, binary()}</tt>
 
 </div>
 
@@ -306,7 +306,7 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>get_bounce_tags() -> {ok, tags()} | {error, string()}</tt>
+<tt>get_bounce_tags() -> {ok, tags()} | {error, binary()}</tt>
 
 </div>
 
@@ -322,7 +322,7 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>get_server() -> {ok, #postmark_server{}} | {error, string()}</tt>
+<tt>get_server() -> {ok, #postmark_server{}} | {error, binary()}</tt>
 
 </div>
 
@@ -330,7 +330,7 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>edit_server(ServerRecord::#postmark_server{}) -> {ok, #postmark_server{}} | {error, string()}</tt>
+<tt>edit_server(ServerRecord::#postmark_server{}) -> {ok, #postmark_server{}} | {error, binary()}</tt>
 
 </div>
 
@@ -338,7 +338,7 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>setup(ServerToken::string()) -> ok</tt>
+<tt>setup(ServerToken::binary()) -> ok</tt>
 
 </div>
 
@@ -346,7 +346,7 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>setup(ServerToken::string(), AccountToken::string()) -> ok</tt>
+<tt>setup(ServerToken::binary(), AccountToken::binary()) -> ok</tt>
 
 </div>
 
@@ -354,7 +354,7 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>get_server_token() -> string()</tt>
+<tt>get_server_token() -> binary()</tt>
 
 </div>
 
@@ -362,7 +362,7 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>get_account_token() -> string()</tt>
+<tt>get_account_token() -> binary()</tt>
 
 </div>
 
@@ -378,7 +378,7 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>send_email(From::string(), To::string(), Subject::string(), Body::emailBody()) -> sendEmailResponse()</tt>
+<tt>send_email(From::binary(), To::binary(), Subject::binary(), Body::emailBody()) -> sendEmailResponse()</tt>
 
 </div>
 
@@ -386,8 +386,8 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>send_email(From::string(), To::string(), Subject::string(), HtmlBody::optionalValue(), TextBody::optionalValue(),
-        Tag::string(), TrackOpens::boolean(), ReplyTo::optionalValue(), Cc::optionalValue(), Bcc::optionalValue(),
+<tt>send_email(From::binary(), To::binary(), Subject::binary(), HtmlBody::optionalValue(), TextBody::optionalValue(),
+        Tag::binary(), TrackOpens::boolean(), ReplyTo::optionalValue(), Cc::optionalValue(), Bcc::optionalValue(),
         TrackLinks::trackLinkStatus()) -> sendEmailResponse()</tt>
 
 </div>
@@ -412,7 +412,7 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>send_email_with_template(From::string(), To::string(), TemplateId::string(), TemplateModel::list(),
+<tt>send_email_with_template(From::binary(), To::binary(), TemplateId::binary(), TemplateModel::list(),
         Tag:: optionalValue(), TrackOpens::boolean(), ReplyTo::optionalValue(), Cc::optionalValue(),
         Bcc:: optionalValue(), TrackLinks::trackLinkStatus()) -> sendEmailResponse()</tt>
 
@@ -422,7 +422,7 @@ Add it to your `rebar.config` like so:
 
 <div class="spec">
 
-<tt>track_links_to_string(TrackLinkStatus::trackLinkStatus()) -> string()</tt>
+<tt>track_links_to_string(TrackLinkStatus::trackLinkStatus()) -> binary()</tt>
 
 </div>
 

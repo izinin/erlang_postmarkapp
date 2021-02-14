@@ -11,6 +11,7 @@
 -author("eokeke").
 
 -compile([{parse_transform, lager_transform}]).
+-compile(export_all).
 
 -include("erlang_postmarkapp.hrl").
 
@@ -28,7 +29,7 @@
     get_response_data/2,
     is_value_not_undefined/1,
     process_json_key/1,
-    track_links_to_string/1,
+    track_links_to_binary/1,
     get_server_token/0,
     get_account_token/0
 ]).
@@ -94,23 +95,19 @@ send_email(From, To, Subject, HtmlBody, TextBody, Tag, TrackOpens, ReplyTo, Cc, 
 %% @doc sends a single email using the email record
 -spec send_email(PostmarkEmail::#postmark_email{}) -> sendEmailResponse().
 send_email(PostmarkEmail) when is_record(PostmarkEmail, postmark_email) ->
-    case verify_email(PostmarkEmail) of
-        true ->
-            PostData = postmark_email_to_json(PostmarkEmail),
-            case erlang_postmarkapp_request:request(post, ?POSTMARK_ENDPOINT_EMAIL, {json, PostData}) of
-                [{headers, _}, {body, Json}] ->
-                    SendResponse = process_send_response(Json),
-                    if
-                        length(SendResponse#postmark_send_response.message_id) > 0 ->
-                            {ok, SendResponse#postmark_send_response.message_id};
-                        SendResponse#postmark_send_response.error_code =/= 0 ->
-                            {error, SendResponse#postmark_send_response.message};
-                        true -> {error, unknown}
-                    end;
-                {error, fail, Reason} -> {error, Reason};
-                {error, _StatusCode, Message} -> {error, Message}
+    PostData = postmark_email_to_json(PostmarkEmail),
+    case erlang_postmarkapp_request:request(post, ?POSTMARK_ENDPOINT_EMAIL, {json, PostData}) of
+        [{headers, _}, {body, Json}] ->
+            SendResponse = process_send_response(Json),
+            if
+                length(SendResponse#postmark_send_response.message_id) > 0 ->
+                    {ok, SendResponse#postmark_send_response.message_id};
+                SendResponse#postmark_send_response.error_code =/= 0 ->
+                    {error, SendResponse#postmark_send_response.message};
+                true -> {error, unknown}
             end;
-        {false, Reason} -> {error, Reason}
+        {error, fail, Reason} -> {error, Reason};
+        {error, _StatusCode, Message} -> {error, Message}
     end;
 
 %% @spec send_email(PostmarkEmail::postmarkEmail()) -> sendEmailResponse()
@@ -185,23 +182,19 @@ send_email_with_template(From, To, TemplateId, TemplateModel, Tag, TrackOpens, R
 %% @doc Send an email using a template.
 -spec send_email_with_template(PostmarkEmail::#postmark_email{}) -> sendEmailResponse().
 send_email_with_template(PostmarkEmail) when is_record(PostmarkEmail, postmark_email) ->
-    case verify_email(PostmarkEmail) of
-        true ->
-            PostData = postmark_email_to_json(PostmarkEmail),
-            case erlang_postmarkapp_request:request(post, ?POSTMARK_ENDPOINT_EMAIL_WITH_TEMPLATE, {json, PostData}) of
-                [{headers, _}, {body, Json}] ->
-                    SendResponse = process_send_response(Json),
-                    if
-                        length(SendResponse#postmark_send_response.message_id) > 0 ->
-                            {ok, SendResponse#postmark_send_response.message_id};
-                        SendResponse#postmark_send_response.error_code =/= 0 ->
-                            {error, SendResponse#postmark_send_response.message};
-                        true -> {error, unknown}
-                    end;
-                {error, fail, Reason} -> {error, Reason};
-                {error, _StatusCode, Message} -> {error, Message}
+    PostData = postmark_email_to_json(PostmarkEmail),
+    case erlang_postmarkapp_request:request(post, ?POSTMARK_ENDPOINT_EMAIL_WITH_TEMPLATE, {json, PostData}) of
+        [{headers, _}, {body, Json}] ->
+            SendResponse = process_send_response(Json),
+            if
+                length(SendResponse#postmark_send_response.message_id) > 0 ->
+                    {ok, SendResponse#postmark_send_response.message_id};
+                SendResponse#postmark_send_response.error_code =/= 0 ->
+                    {error, SendResponse#postmark_send_response.message};
+                true -> {error, unknown}
             end;
-        {false, Reason} -> {error, Reason}
+        {error, fail, Reason} -> {error, Reason};
+        {error, _StatusCode, Message} -> {error, Message}
     end;
 
 %% @spec send_email_with_template(PostmarkEmail::postmarkEmail()) -> sendEmailResponse()
@@ -221,14 +214,14 @@ get_response_data(Key, Data) ->
     end.
 
 %% @doc converts the track links option to the string value
--spec track_links_to_string(TrackLinkStatus::trackLinkStatus()) -> string().
-track_links_to_string(TrackLinkStatus) ->
+-spec track_links_to_binary(TrackLinkStatus::trackLinkStatus()) -> string().
+track_links_to_binary(TrackLinkStatus) ->
     case TrackLinkStatus of
-        none -> "None";
-        html_and_text -> "HtmlAndText";
-        html_only -> "HtmlOnly";
-        text_only -> "TextOnly";
-        undefined -> "None"
+        none -> <<"None">>;
+        html_and_text -> <<"HtmlAndText">>;
+        html_only -> <<"HtmlOnly">>;
+        text_only -> <<"TextOnly">>;
+        undefined -> <<"None">>
     end.
 
 -spec attachments_2_json_proplist([#postmark_attachment{}]) -> list().
@@ -320,27 +313,6 @@ collect_emails([H|T], Accumulator) ->
             collect_emails(T, Accumulator)
     end.
 
-%% @doc checks the email for some conditions that show if it should be sent or not
--spec verify_email(PostmarkEmail::postmarkEmail()) -> boolean().
-verify_email(PostmarkEmail) when is_record(PostmarkEmail, postmark_email) ->
-    #postmark_email{to = To, cc = Cc, bcc = Bcc} = PostmarkEmail,
-    ToAddresses = lists:filter(fun (Value) ->
-        case Value of
-            undefined -> false;
-            Value -> true
-        end
-                               end, [To, Cc, Bcc]),
-    List = lists:flatmap(fun (Tos) -> string:tokens(Tos, ", ") end, ToAddresses),
-    if
-        length(List) > 50 -> {false, "There can only be 50 max recipients per message"};
-        length(List) =:= 0 -> {false, "No email recipients specified"};
-        true -> true
-    end;
-
-%% @doc checks the email for some conditions that show if it should be sent or not
-verify_email(_) ->
-    {false, "No a valid postmark email record"}.
-
 %% @doc converts a postmark email record to the appropriate JSON data array
 -spec postmark_email_to_json(PostmarkEmail::postmarkEmail()) -> list().
 postmark_email_to_json(PostmarkEmail) when is_record(PostmarkEmail, postmark_email) ->
@@ -362,40 +334,9 @@ postmark_email_to_json(PostmarkEmail) when is_record(PostmarkEmail, postmark_ema
         {<<"InlineCss">>, InlineCss},
         {<<"TrackOpens">>, TrackOpens},
         {<<"Attachments">>, attachments_2_json_proplist(Attachments)},
-        {<<"TrackLinks">>, track_links_to_string(TrackLinks)}
+        {<<"TrackLinks">>, track_links_to_binary(TrackLinks)}
     ],
-    Processed = lists:filter(fun is_value_not_undefined/1, Raw),
-    email_item_to_json(Processed);
+    lists:filter(fun is_value_not_undefined/1, Raw);
 
 %% @doc converts a postmark email record to the appropriate JSON data array
-postmark_email_to_json(_PostmarkEmail) ->
-    [].
-
--spec email_item_to_json(Processed::list()) -> list().
-%% @doc converts the processed list of attributes to a JSON proplist
-email_item_to_json(Processed) ->
-    email_item_to_json(Processed, []).
-
--spec email_item_to_json(Processed::list(), Accumulator::list()) -> list().
-%% @doc converts the processed list of attributes to a JSON proplist
-email_item_to_json([], Accumulator) ->
-    Accumulator;
-
-%% @doc converts the processed list of attributes to a JSON proplist
-email_item_to_json([H|T], Accumulator) ->
-    case H of
-        {<<"Attachments">>, Attachments} ->
-            email_item_to_json(T, [{<<"Attachments">>, Attachments} | Accumulator]);
-        {<<"TemplateModel">>, Model} ->
-            ModelData = email_item_to_json(Model, []),
-            email_item_to_json(T, [{<<"TemplateModel">>, ModelData} | Accumulator]);
-        {Key, Value} ->
-            if
-                is_atom(Value) ->
-                    email_item_to_json(T, [{process_json_key(Key), list_to_binary(atom_to_list(Value))} | Accumulator]);
-                is_list(Value) ->
-                    email_item_to_json(T, [{process_json_key(Key), list_to_binary(Value)} | Accumulator]);
-                true ->
-                    email_item_to_json(T, Accumulator)
-            end
-    end.
+postmark_email_to_json(_PostmarkEmail) ->  [].
