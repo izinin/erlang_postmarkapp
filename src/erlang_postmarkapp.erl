@@ -269,7 +269,7 @@ start() ->
         undefined -> ets:new(?POSTMARK_ETS_TABLE, [set, named_table]);
         _Table -> ok
     catch
-        error:badarg -> lager:info("Table probaly already exists~n")
+        error:badarg -> ok
     end,
     inets:start(),
     ssl:start(),
